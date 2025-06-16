@@ -3,7 +3,8 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 from tkinter import messagebox
 import mysql.connector
-import cv2 
+import cv2
+import os
 import time  # for unique timestamp
 
 class Student:
@@ -361,77 +362,6 @@ class Student:
         self.var_address.set("")
         self.var_teacher.set("")
 
-    # def genrate_dataset(self):
-    #     if self.var_dept.get() == "Select Department" or self.var_stud_name.get() == "" or self.var_stud_id.get() == "":
-    #         messagebox.showerror("Error","All Fileds Are Required",parent=self.root)
-    #     else:
-    #         try:
-    #             conn = mysql.connector.connect(host="localhost",username="root",password="root",database="face_recognizer",port=3310)
-    #             my_cursor = conn.cursor()
-    #             my_cursor.execute("select * from tbl_student")
-    #             myresult = my_cursor.fetchall()
-    #             id = 0
-                
-    #             for x in myresult:
-    #                 id+=1
-    #             my_cursor.execute("update tbl_student set dept=%s,course=%s,year=%s,semester=%s,name=%s,division=%s,rollno=%s,gender=%s,dob=%s,email=%s,phone=%s,address=%s,teacher=%s,photosample=%s where student_id=%s",(self.var_dept.get()
-    #                                                                                                                                                                                                                         ,self.var_course.get()
-    #                                                                                                                                                                                                                         ,self.var_year.get()
-    #                                                                                                                                                                                                                         ,self.var_semester.get()
-    #                                                                                                                                                                                                                         ,self.var_stud_name.get()
-    #                                                                                                                                                                                                                         ,self.var_div.get()
-    #                                                                                                                                                                                                                         ,self.var_roll.get()
-    #                                                                                                                                                                                                                         ,self.var_gender.get()
-    #                                                                                                                                                                                                                         ,self.var_dob.get()
-    #                                                                                                                                                                                                                         ,self.var_email.get()
-    #                                                                                                                                                                                                                         ,self.var_phone.get()
-    #                                                                                                                                                                                                                         ,self.var_address.get()
-    #                                                                                                                                                                                                                         ,self.var_teacher.get()
-    #                                                                                                                                                                                                                         ,self.var_radio1.get()
-    #                                                                                                                                                                                                                         ,self.var_stud_id.get()==id+1
-    #                                                                                                                                                                                                                         ))
-    #             conn.commit()
-    #             self.fetch_data()
-    #             self.reset()
-    #             conn.close()
-    
-    #             #===============================Load Predefined Data On Face frontals from opencv==================
-    #             face_classifier = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-
-    #             def face_cropped(img):
-    #                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    #                 faces = face_classifier.detectMultiScale(gray, 1.3, 5)
-    #                 #Scaling factore = 1.3
-    #                 #Minimum Neighbor = 5
-
-    #                 for (x,y,w,h) in faces:
-    #                     face_cropped = img[y:y+h,x:x+w]
-    #                     return face_cropped
-                
-    #             cap = cv2.VideoCapture(0)
-    #             img_id = 0
-
-    #             while True:
-    #                 ret, my_frame = cap.read()
-    #                 if face_cropped(my_frame) is not None:
-    #                     img_id += 1
-    #                     face = cv2.resize(face_cropped(my_frame), (650, 650))
-    #                     face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
-    #                     file_name_path = "data/user."+str(id)+"."+str(img_id)+".jpg"
-    #                     cv2.imwrite(file_name_path, face)
-
-    #                     cv2.putText(face, str(img_id), (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
-    #                     cv2.imshow("Capturing Faces", face)
-
-    #                 if cv2.waitKey(1) == 13 or int(img_id) == 5:  # Press Enter or collect 100 samples
-    #                     break
-    #             cap.release()
-    #             cv2.destroyAllWindows()
-    #             messagebox.showinfo("Result", "Generating dataset completed!", parent=self.root)
-    #         except Exception as ex:
-    #                 messagebox.showwarning("Warning",f"Something Want Worng : {str(ex)}", parent=self.root)
-    
-
     def genrate_dataset(self):
         if self.var_dept.get() == "Select Department" or self.var_stud_name.get() == "" or self.var_stud_id.get() == "":
             messagebox.showerror("Error", "All Fields Are Required", parent=self.root)
@@ -456,16 +386,15 @@ class Student:
                     self.var_address.get(),
                     self.var_teacher.get(),
                     self.var_radio1.get(),
-                    self.var_stud_id.get() == id
+                    self.var_stud_id.get()
                 ))
 
                 conn.commit()
                 self.fetch_data()
-                self.reset()
                 conn.close()
 
-                # =============== Load Predefined Face Classifier ===============
-                face_classifier = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+                # Load face classifier
+                face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
                 def face_cropped(img):
                     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -476,36 +405,43 @@ class Student:
 
                 cap = cv2.VideoCapture(0)
                 img_id = 0
+                student_id = self.var_stud_id.get()
 
-                student_id = self.var_stud_id.get()  # Use form input as unique ID
+                # Create data directory if it doesn't exist
+                if not os.path.exists("data"):
+                    os.makedirs("data")
 
-                while True:
+                # Find the next available image number for this student
+                existing_files = [f for f in os.listdir("data") if f.startswith(f"user.{student_id}.")]
+                start_num = len(existing_files) + 1
+
+                while img_id < 100:  # Capture exactly 100 photos
                     ret, my_frame = cap.read()
-                    if face_cropped(my_frame) is not None:
+                    cropped_face = face_cropped(my_frame)
+                    if cropped_face is not None:
                         img_id += 1
-                        face = cv2.resize(face_cropped(my_frame), (650, 650))
-
-                        # Create unique filename with timestamp
-                        timestamp = int(time.time())
-                        file_name_path = f"data/user.{student_id}.{timestamp}_{img_id}.jpg"
-
+                        face = cv2.resize(cropped_face, (450, 450))
+                        
+                        # Create unique filename with sequential number
+                        file_num = start_num + img_id - 1
+                        file_name_path = f"data/user.{student_id}.{file_num}.jpg"
                         cv2.imwrite(file_name_path, face)
-
-                        # Show captured face
-                        cv2.putText(face, str(img_id), (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                        
+                        # Show captured face with count
+                        cv2.putText(face, f"Sample {img_id}/100", (50, 50), 
+                                cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
                         cv2.imshow("Capturing Faces", face)
 
-                    if cv2.waitKey(1) == 13 or int(img_id) == 5:
+                    # Press 'q' to quit early if needed
+                    if cv2.waitKey(1) == ord('q'):
                         break
 
                 cap.release()
                 cv2.destroyAllWindows()
-                messagebox.showinfo("Result", "Generating dataset completed!", parent=self.root)
+                messagebox.showinfo("Result", f"Generated {img_id} image samples for student ID: {student_id}", parent=self.root)
 
             except Exception as ex:
-                messagebox.showwarning("Warning", f"Something Went Wrong: {str(ex)}", parent=self.root)
-
-
+                messagebox.showerror("Error", f"Something went wrong: {str(ex)}", parent=self.root)
 
 if __name__ == "__main__":
     root = Tk()

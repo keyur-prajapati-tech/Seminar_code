@@ -3,6 +3,7 @@ from tkinter import ttk
 from PIL import Image,ImageTk #pip install pillow
 from student import Student
 from train_data import TrainData
+from face_recognition import FaceRecognition
 import os
 
 
@@ -69,7 +70,7 @@ class Face_Recognition_System:
         b2 = Button(bg_img,image=self.photoimag_facerecognition,cursor="hand2",border="3px solid #000",borderwidth="5px")
         b2.place(x=500,y=100,width=220,height=220)
 
-        b2_1 = Button(bg_img,text="Face Detector",cursor="hand2",font=("Arial",15,"bold"),bg="navy",fg="white",border="3px solid #000")
+        b2_1 = Button(bg_img,text="Face Detector",cursor="hand2",command=self.face_recognition,font=("Arial",15,"bold"),bg="navy",fg="white",border="3px solid #000")
         b2_1.place(x=500,y=300,width=220,height=40)
 
         #---------------Face Recognition Button--------------------
@@ -147,6 +148,10 @@ class Face_Recognition_System:
     def train_student_data(self):
         self.new_window = Toplevel(self.root)
         self.app = TrainData(self.new_window)
+
+    def face_recognition(self):
+        self.new_window = Toplevel(self.root)
+        self.app = FaceRecognition(self.new_window)
 
     def open_img(self):
         os.startfile("data")
