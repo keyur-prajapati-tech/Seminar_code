@@ -17,6 +17,7 @@ class FaceRecognition:
         # Initialize variables
         self.video_cap = None
         self.recognizing = False
+        self.min_confidence = 70  # Minimum confidence threshold
         
         # Initialize face recognizer
         self.recognizer = cv2.face.LBPHFaceRecognizer_create()
@@ -25,6 +26,7 @@ class FaceRecognition:
             self.status_message = "Model loaded successfully"
         except:
             self.status_message = "Model not found - Please train first"
+            messagebox.showerror("Error", "Classifier model not found. Please train the model first.")
 
         # UI Components
         self.setup_ui()
@@ -74,6 +76,16 @@ class FaceRecognition:
                          cursor="hand2", command=self.toggle_recognition)
         self.recognition_btn.place(x=950, y=595, width=250, height=40)
 
+        # Confidence Threshold Slider
+        self.confidence_frame = Frame(main_frame, bg="white")
+        self.confidence_frame.place(x=650, y=595, width=250, height=40)
+        
+        Label(self.confidence_frame, text="Confidence:", bg="white").pack(side=LEFT)
+        self.confidence_slider = Scale(self.confidence_frame, from_=50, to=90, 
+                                     orient=HORIZONTAL, bg="white")
+        self.confidence_slider.set(self.min_confidence)
+        self.confidence_slider.pack(side=LEFT, fill=X, expand=True)
+
         # Status Bar
         self.status_var = StringVar()
         self.status_var.set(self.status_message)
@@ -95,7 +107,7 @@ class FaceRecognition:
             
             query = """
                 SELECT student_id, name, email, dept, course, rollno, division, semester 
-                FROM face_recognizer.tbl_student
+                FROM tbl_student 
                 WHERE student_id = %s
             """
             cursor.execute(query, (student_id,))
@@ -131,6 +143,7 @@ class FaceRecognition:
             return
             
         self.recognizing = True
+        self.min_confidence = self.confidence_slider.get()
         self.recognition_btn.config(text="STOP RECOGNITION", bg="red")
         self.status_var.set("Recognition in progress...")
         
@@ -158,7 +171,10 @@ class FaceRecognition:
                 id, confidence = self.recognizer.predict(gray[y:y+h, x:x+w])
                 confidence_percent = int(100 * (1 - confidence / 300))
                 
-                if confidence_percent > 70:  # Confidence threshold
+                # Update confidence threshold from slider
+                self.min_confidence = self.confidence_slider.get()
+                
+                if confidence_percent > self.min_confidence:  # Use dynamic confidence threshold
                     student = self.get_student_info(id)
                     if student:
                         # Display student info
@@ -166,11 +182,13 @@ class FaceRecognition:
                         cv2.putText(img, f"Name: {student['name']}", (x, y-80), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
                         cv2.putText(img, f"Roll: {student['rollno']}", (x, y-60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
                         cv2.putText(img, f"Dept: {student['dept']}", (x, y-40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-                        cv2.putText(img, f"Course: {student['course']}", (x, y-20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                        cv2.putText(img, f"Confidence: {confidence_percent}%", (x, y-20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
                     else:
-                        cv2.putText(img, "Unknown Student", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                        cv2.putText(img, "Unknown Student", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 2)
                 else:
-                    cv2.putText(img, "Unknown Face", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                    cv2.putText(img, "Unknown Face", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                    cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 2)
             
             cv2.imshow("Face Recognition", img)
             
