@@ -162,7 +162,7 @@ class Student:
 
         self.search_var = StringVar()
         search_combo = ttk.Combobox(search_frame, textvariable=self.search_var, font=("arial", 12), state="readonly", width=12)
-        search_combo["values"] = ("Select", "Roll_No", "Phone", "Name")
+        search_combo["values"] = ("Select", "Department", "Course", "Roll_No", "Name", "Email")
         search_combo.current(0)
         search_combo.grid(row=0, column=1, padx=10, pady=5, sticky=W)
 
@@ -170,8 +170,8 @@ class Student:
         search_entry = ttk.Entry(search_frame, textvariable=self.search_txt, font=("arial", 12), width=15)
         search_entry.grid(row=0, column=2, padx=10, pady=5, sticky=W)
 
-        Button(search_frame, text="Search", width=10, font=("arial", 12, "bold"), bg="blue", fg="white").grid(row=0, column=3, padx=10)
-        Button(search_frame, text="Show All", width=10, font=("arial", 12, "bold"), bg="green", fg="white").grid(row=0, column=4, padx=10)
+        Button(search_frame, text="Search", width=10, command=self.search_data, font=("arial", 12, "bold"), bg="blue", fg="white").grid(row=0, column=3, padx=10)
+        Button(search_frame, text="Show All", width=10, command=self.fetch_data, font=("arial", 12, "bold"), bg="green", fg="white").grid(row=0, column=4, padx=10)
 
         # ----------------------Table Frame-------------------------
         table_frame = Frame(right_frame, bd=2, relief=RIDGE, bg="white")
@@ -361,6 +361,45 @@ class Student:
         self.var_phone.set("")
         self.var_address.set("")
         self.var_teacher.set("")
+    
+    def search_data(self):
+        if self.search_var.get() == "Select" or self.search_txt.get() == "":
+            messagebox.showerror("Error", "Please select search criteria and enter search text", parent=self.root)
+        else:
+            try:
+                conn = mysql.connector.connect(host="localhost", username="root", password="root", 
+                                            database="face_recognizer", port=3310)
+                my_cursor = conn.cursor()
+                
+                search_field = self.search_var.get().lower()
+                search_text = self.search_txt.get()
+                
+                # Handle different search fields appropriately
+                if search_field == "department":
+                    my_cursor.execute("SELECT * FROM tbl_student WHERE dept LIKE %s", ("%" + search_text + "%",))
+                elif search_field == "course":
+                    my_cursor.execute("SELECT * FROM tbl_student WHERE course LIKE %s", ("%" + search_text + "%",))
+                elif search_field == "roll_no":
+                    my_cursor.execute("SELECT * FROM tbl_student WHERE rollno LIKE %s", ("%" + search_text + "%",))
+                elif search_field == "name":
+                    my_cursor.execute("SELECT * FROM tbl_student WHERE name LIKE %s", ("%" + search_text + "%",))
+                elif search_field == "email":
+                    my_cursor.execute("SELECT * FROM tbl_student WHERE email LIKE %s", ("%" + search_text + "%",))
+                
+                rows = my_cursor.fetchall()
+                
+                if len(rows) != 0:
+                    self.student_table.delete(*self.student_table.get_children())
+                    for row in rows:
+                        self.student_table.insert("", END, values=row)
+                    conn.commit()
+                else:
+                    messagebox.showinfo("Info", "No records found matching your search", parent=self.root)
+                    
+                conn.close()
+                
+            except Exception as ex:
+                messagebox.showerror("Error", f"Error in search operation: {str(ex)}", parent=self.root)
 
     def genrate_dataset(self):
         if self.var_dept.get() == "Select Department" or self.var_stud_name.get() == "" or self.var_stud_id.get() == "":

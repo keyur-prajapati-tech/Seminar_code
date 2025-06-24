@@ -4,6 +4,7 @@ from PIL import Image,ImageTk #pip install pillow
 from student import Student
 from train_data import TrainData
 from face_recognition import FaceRecognition
+from demo_attendance import FaceRecognitionAttandanceSystem
 import os
 
 
@@ -81,7 +82,7 @@ class Face_Recognition_System:
         b3 = Button(bg_img,image=self.photoimag_btn3,cursor="hand2",border="3px solid #000",borderwidth="5px")
         b3.place(x=800,y=100,width=220,height=220)
 
-        b3_1 = Button(bg_img,text="Attendance",cursor="hand2",font=("Arial",15,"bold"),bg="navy",fg="white",border="3px solid #000")
+        b3_1 = Button(bg_img,text="Make Attendance",cursor="hand2", command=self.face_recognitionAttandance,font=("Arial",15,"bold"),bg="navy",fg="white",border="3px solid #000")
         b3_1.place(x=800,y=300,width=220,height=40)
 
         #---------------Face Recognition Button--------------------
@@ -125,7 +126,7 @@ class Face_Recognition_System:
         b7 = Button(bg_img,image=self.photoimag_btn7,cursor="hand2",border="3px solid #000",borderwidth="5px")
         b7.place(x=800,y=400,width=220,height=220)
 
-        b7_1 = Button(bg_img,text="Devloper",cursor="hand2",font=("Arial",15,"bold"),bg="navy",fg="white",border="3px solid #000")
+        b7_1 = Button(bg_img,text="VIEW AND FILTER ATTANDANCE",cursor="hand2",font=("Arial",10,"bold"),bg="navy",fg="white",border="3px solid #000")
         b7_1.place(x=800,y=600,width=220,height=40)
 
         #---------------Face Recognition Button--------------------
@@ -152,6 +153,10 @@ class Face_Recognition_System:
     def face_recognition(self):
         self.new_window = Toplevel(self.root)
         self.app = FaceRecognition(self.new_window)
+
+    def face_recognitionAttandance(self):
+        self.new_window =  Toplevel(self.root)
+        self.app = FaceRecognitionAttandanceSystem(self.new_window)
 
     def open_img(self):
         os.startfile("data")
