@@ -2,12 +2,6 @@ student_id,rollno,dept,course,date,status
 DATE : 2025-06-25,Department : DCS,Course : MCA
 2023063720,5,DCS,MCA,2025-06-25,Present
 
-DATE : 2025-06-25,Department : LAW,Course : LLB
-34,33,LAW,LLB,2025-06-25,Present
-
-DATE : 2025-06-25,Department : LAW,Course : LLM
-6,157,LAW,LLM,2025-06-25,Present
-
 DATE : 2025-06-24,Department : CHEMISTRY,Course : BSC IT
 29,102,CHEMISTRY,BSC IT,2025-06-24,Present
 
@@ -16,7 +10,7 @@ DATE : 2025-06-24,Department : DCS,Course : MCA
 
 DATE : 2025-06-24,Department : LAW,Course : LLM
 6,157,LAW,LLM,2025-06-24,Present
-
+    
 DATE : 2025-06-21,Department : CHEMISTRY,Course : BSC IT
 29,102,CHEMISTRY,BSC IT,2025-06-21,Present
 
