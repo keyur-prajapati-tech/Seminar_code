@@ -5,6 +5,8 @@ from student import Student
 from train_data import TrainData
 from face_recognition import FaceRecognition
 from demo_attendance import FaceRecognitionAttandanceSystem
+from face_recognization_attendance import FaceRecognizationAttendance
+from HelpDesk import HelpDesk
 import os
 
 
@@ -93,7 +95,7 @@ class Face_Recognition_System:
         b4 = Button(bg_img,image=self.photoimag_btn4,cursor="hand2",border="3px solid #000",borderwidth="5px")
         b4.place(x=1100,y=100,width=220,height=220)
 
-        b4_1 = Button(bg_img,text="Help Desk",cursor="hand2",font=("Arial",15,"bold"),bg="navy",fg="white",border="3px solid #000")
+        b4_1 = Button(bg_img,text="Help Desk",cursor="hand2", command=self.HelpDesk,font=("Arial",15,"bold"),bg="navy",fg="white",border="3px solid #000")
         b4_1.place(x=1100,y=300,width=220,height=40)
 
         #---------------Face Recognition Button--------------------
@@ -123,10 +125,10 @@ class Face_Recognition_System:
         img10 = img10.resize((220,220),Image.ANTIALIAS)
         self.photoimag_btn7 = ImageTk.PhotoImage(img10)
 
-        b7 = Button(bg_img,image=self.photoimag_btn7,cursor="hand2",border="3px solid #000",borderwidth="5px")
+        b7 = Button(bg_img,image=self.photoimag_btn7, command=self.attendance_window, cursor="hand2",border="3px solid #000",borderwidth="5px")
         b7.place(x=800,y=400,width=220,height=220)
 
-        b7_1 = Button(bg_img,text="VIEW AND FILTER ATTANDANCE",cursor="hand2",font=("Arial",10,"bold"),bg="navy",fg="white",border="3px solid #000")
+        b7_1 = Button(bg_img,text="VIEW AND FILTER ATTANDANCE",cursor="hand2", command=self.attendance_window, font=("Arial",10,"bold"),bg="navy",fg="white",border="3px solid #000")
         b7_1.place(x=800,y=600,width=220,height=40)
 
         #---------------Face Recognition Button--------------------
@@ -137,7 +139,7 @@ class Face_Recognition_System:
         b7 = Button(bg_img,image=self.photoimag_btn8,cursor="hand2",border="3px solid #000",borderwidth="5px")
         b7.place(x=1100,y=400,width=220,height=220)
 
-        b7_1 = Button(bg_img,text="Exit",cursor="hand2",font=("Arial",15,"bold"),bg="navy",fg="white",border="3px solid #000")
+        b7_1 = Button(bg_img,text="Exit",cursor="hand2", command=self.on_close,font=("Arial",15,"bold"),bg="navy",fg="white",border="3px solid #000")
         b7_1.place(x=1100,y=600,width=220,height=40)
 
 
@@ -157,9 +159,20 @@ class Face_Recognition_System:
     def face_recognitionAttandance(self):
         self.new_window =  Toplevel(self.root)
         self.app = FaceRecognitionAttandanceSystem(self.new_window)
+    
+    def attendance_window(self):
+        self.new_window = Toplevel(self.root)
+        self.app = FaceRecognizationAttendance(self.new_window)
+
+    def HelpDesk(self):
+        self.new_window = Toplevel(self.root)
+        self.app = HelpDesk(self.new_window)
 
     def open_img(self):
         os.startfile("data")
+
+    def on_close(self):
+        self.root.destroy()
 
 if __name__ == "__main__":
     root = Tk()

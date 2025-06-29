@@ -211,11 +211,12 @@ class FaceRecognitionAttandanceSystem:
             
             insert_query = """
                 INSERT INTO tbl_attendance 
-                (student_id, rollno, dept, course, date, status)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                (student_id,name, rollno, dept, course, date, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(insert_query, (
                 student_info['student_id'],
+                student_info['name'],
                 student_info['rollno'],
                 student_info['dept'],
                 student_info['course'],
@@ -253,7 +254,7 @@ class FaceRecognitionAttandanceSystem:
         with open(self.csv_file, mode='w', newline='') as file:
             writer = csv.writer(file)
             # Write headers
-            writer.writerow(["student_id", "rollno", "dept", "course", "date", "status"])
+            writer.writerow(["student_id", "rollno", "name", "dept", "course", "date", "status"])
             
             # Write grouped data
             for (date, dept, course), records in grouped_data.items():
@@ -263,6 +264,7 @@ class FaceRecognitionAttandanceSystem:
                 for record in records:
                     writer.writerow([
                         record['student_id'],
+                        record['name'],
                         record['rollno'],
                         record['dept'],
                         record['course'],

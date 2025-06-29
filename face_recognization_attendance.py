@@ -3,352 +3,241 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 import os
 import cv2
+import csv
+from tkinter import filedialog
 import numpy as np
 from tkinter import messagebox
 import mysql.connector
 from datetime import datetime
 
-class Attendance_Filter:
+mydata = []
+class FaceRecognizationAttendance:
     def __init__(self, root):
         self.root = root
         self.root.geometry("1550x800+0+0")
         self.root.title("Face Recognition Attendance System")
 
+        #=================================variables======================
+        self.var_att_id = StringVar()
+        self.var_att_roll = StringVar()
+        self.var_att_name = StringVar()
+        self.var_att_dept = StringVar()
+        self.var_att_time = StringVar()
+        self.var_att_date = StringVar()
+        self.var_att_attendance = StringVar()
+
+        #First image
+        img = Image.open("D:/Seminar_4thsem/image/face_detection_img.jpg")
+        img = img.resize((800,200), Image.ANTIALIAS)
+        self.photoimg = ImageTk.PhotoImage(img)
+
+        f_lbl = Label(self.root, image=self.photoimg)
+        f_lbl.place(x=0,y=0,width=800,height=200)
+
+        #Second image
+        img1 = Image.open("D:/Seminar_4thsem/image/home_page_img.webp")
+        img1 = img1.resize((800,200), Image.ANTIALIAS)
+        self.photoimg1 = ImageTk.PhotoImage(img1)
+
+        f_lbl = Label(self.root, image=self.photoimg1)
+        f_lbl.place(x=800,y=0,width=800,height=200)
+
+        #BG Image
+        img2 = Image.open("D:/Seminar_4thsem/image/backgroung_image.jpg")
+        img2 = img2.resize((1530, 710), Image.ANTIALIAS)
+        self.photoimg2 = ImageTk.PhotoImage(img2)
+
+        bg_img = Label(self.root,image=self.photoimg2)
+        bg_img .place(x=0,y=200,width=1540,height=710)
+
         # Title
         title_lbl = Label(self.root, text="ATTENDANCE MANAGEMENT SYSTEM", font=("times new roman", 30, "bold"),
                          bg="navy", fg="white")
-        title_lbl.place(x=0, y=0, width=1550, height=50)
+        title_lbl.place(x=0, y=200, width=1537, height=50)
 
         # Back Button
         back_btn = Button(self.root, text="Back", command=self.root.destroy, font=("times new roman", 13, "bold"),
                          bg="red", fg="white", relief="ridge", borderwidth=2)
         back_btn.place(x=1420, y=6, width=100, height=40)
 
-        # Main Frame
-        main_frame = Frame(self.root, bd=2, bg="white", relief=RIDGE)
-        main_frame.place(x=10, y=60, width=1530, height=730)
+        #Main Frame
+        main_frame = Frame(bg_img,bd=2,bg="white")
+        main_frame.place(x=10,y=55,width=1480,height=520)
 
-        # Left Frame - Student Attendance Details
-        left_frame = LabelFrame(main_frame, bd=4, bg="white", relief=RIDGE, text="Student Attendance Details",
-                              font=("times new roman", 12, "bold"))
-        left_frame.place(x=10, y=10, width=750, height=350)
+        #------------------------Left Frame-------------------------
+        Left_frame = LabelFrame(main_frame,bd=5,bg="white",relief=RIDGE,text="Student Attendance Details",font=("Arial", 12, "bold"))
+        Left_frame.place(x=10,y=10,width=730,height=500)
 
-        # Attendance Details Labels
-        details_labels = [
-            ("Attendance Id:", 0, 0), ("Rule:", 1, 0), ("Name:", 2, 0),
-            ("Department:", 3, 0), ("Time:", 4, 0), ("Date:", 5, 0),
-            ("Attendance Status:", 6, 0), ("Status:", 7, 0)
-        ]
+        img_left = Image.open("D:/Seminar_4thsem/image/student_img2.jpg")
+        img_left = img_left.resize((710, 130), Image.ANTIALIAS)
+        self.photoimg_left = ImageTk.PhotoImage(img_left)
 
-        self.attendance_details = {}
-        for text, row, column in details_labels:
-            label = Label(left_frame, text=text, font=("times new roman", 12, "bold"), bg="white")
-            label.grid(row=row, column=column, padx=10, pady=5, sticky=W)
-            
-            entry = ttk.Entry(left_frame, width=25, font=("times new roman", 12))
-            entry.grid(row=row, column=column+1, padx=10, pady=5, sticky=W)
-            self.attendance_details[text.split(":")[0].strip().lower().replace(" ", "_")] = entry
+        f_lbl = Label(Left_frame, image=self.photoimg_left)
+        f_lbl.place(x=5,y=0,width=710, height=130)
 
-        # Right Frame - Attendance Records
-        right_frame = LabelFrame(main_frame, bd=4, bg="white", relief=RIDGE, text="Attendance Details",
-                               font=("times new roman", 12, "bold"))
-        right_frame.place(x=770, y=10, width=750, height=350)
+        left_inside_frame = Frame(Left_frame,bd=2,relief=RIDGE,bg="white")
+        left_inside_frame.place(x=10,y=135,width=700,height=330)
 
-        # Attendance Table
-        scroll_x = ttk.Scrollbar(right_frame, orient=HORIZONTAL)
-        scroll_y = ttk.Scrollbar(right_frame, orient=VERTICAL)
+        #-----------------------Label and Entry---------------------
+        # Row 1
+        Label(left_inside_frame, text="Attendance Id:", font=("arial", 12), bg="white").grid(row=0, column=0, padx=10, pady=5, sticky=W)
+        ttk.Entry(left_inside_frame, width=20, textvariable=self.var_att_id ,font=("arial", 12)).grid(row=0, column=1, padx=10, pady=5, sticky=W)
 
-        self.attendance_table = ttk.Treeview(right_frame, columns=(
-            "attendance_id", "rule", "name", "department", "time", "date", "status"),
-            xscrollcommand=scroll_x.set, yscrollcommand=scroll_y.set)
+        # Row 2
+        Label(left_inside_frame, text="Roll No:", font=("arial", 12), bg="white").grid(row=0, column=2, padx=10, pady=5, sticky=W)
+        ttk.Entry(left_inside_frame, width=20, textvariable=self.var_att_roll ,font=("arial", 12)).grid(row=0, column=3, padx=10, pady=5, sticky=W)
+
+        # Row 3
+        Label(left_inside_frame, text="Name:", font=("arial", 12), bg="white").grid(row=1, column=0, padx=10, pady=5, sticky=W)
+        ttk.Entry(left_inside_frame, width=20, textvariable=self.var_att_name ,font=("arial", 12)).grid(row=1, column=1, padx=10, pady=5, sticky=W)
+
+        # Row 4
+        Label(left_inside_frame, text="Department:", font=("arial", 12), bg="white").grid(row=1, column=2, padx=10, pady=5, sticky=W)
+        ttk.Entry(left_inside_frame, width=20, textvariable=self.var_att_dept ,font=("arial", 12)).grid(row=1, column=3, padx=10, pady=5, sticky=W)
+
+        # Row 5
+        Label(left_inside_frame, text="Time:", font=("arial", 12), bg="white").grid(row=2, column=0, padx=10, pady=5, sticky=W)
+        ttk.Entry(left_inside_frame, width=20, textvariable=self.var_att_time, font=("arial", 12)).grid(row=2, column=1, padx=10, pady=5, sticky=W)
+
+        # Row 6
+        Label(left_inside_frame, text="Date:", font=("arial", 12), bg="white").grid(row=2, column=2, padx=10, pady=5, sticky=W)
+        ttk.Entry(left_inside_frame, width=20, textvariable=self.var_att_date, font=("arial", 12)).grid(row=2, column=3, padx=10, pady=5, sticky=W)
+
+        # Row 7
+        Label(left_inside_frame, text="Attendance Status:", font=("arial", 12), bg="white").grid(row=3, column=0, padx=10, pady=5, sticky=W)
+        course_combo = ttk.Combobox(left_inside_frame, textvariable=self.var_att_attendance, font=("arial", 12), state="readonly", width=17)
+        course_combo["values"] = ("Select Status", "Persent", "Absent")
+        course_combo.current(0)
+        course_combo.grid(row=3, column=1, padx=10, pady=5, sticky=W)
+
+        #button frame
+        btn_frame = Frame(left_inside_frame,bd=5,relief=RIDGE,bg="white")
+        btn_frame.place(x=3,y=280,width=690,height=35)
+
+        # Buttons
+        import_csv_btn = Button(btn_frame, text="Import CSV", command=self.importCSV, width=16, font=("arial", 12, "bold"), bg="blue", fg="white")
+        import_csv_btn.grid(row=0, column=0)
+
+
+        export_csv_btn = Button(btn_frame, text="Export CSV", command=self.exportCSV, width=16, font=("arial", 12, "bold"), bg="blue", fg="white")
+        export_csv_btn.grid(row=0, column=1)
+
+
+        update_btn = Button(btn_frame, text="Update", width=16, font=("arial", 12, "bold"), bg="blue", fg="white")
+        update_btn.grid(row=0, column=2)
+
+        reset_btn = Button(btn_frame, text="Reset", command= self.reset_data, width=16, font=("arial", 12, "bold"), bg="blue", fg="white")
+        reset_btn.grid(row=0, column=3)
+
+        # ----------------------Right Frame-------------------------
+        right_frame = LabelFrame(main_frame, bd=5, relief=RIDGE, text="Attendance Details", font=("Arial", 12, "bold"), bg="white")
+        right_frame.place(x=740, y=10, width=720, height=500)
+
+        table_frame = Frame(right_frame,bd=2,relief=RIDGE,bg="white")
+        table_frame.place(x=5,y=5,width=700,height=455)
+
+        #=======================Scroll bar table=====================
+        scroll_x = ttk.Scrollbar(table_frame, orient=HORIZONTAL)
+        scroll_y = ttk.Scrollbar(table_frame, orient=VERTICAL)
+
+        self.AttendaceReportTable = ttk.Treeview(table_frame, columns=("Id","Roll No","Name","Department","Time","Date","Attendance Status"),
+            xscrollcommand=scroll_x.set, yscrollcommand=scroll_y.set
+        )
+
+       # Scroll bar table
+        scroll_x = ttk.Scrollbar(table_frame, orient=HORIZONTAL)
+        scroll_y = ttk.Scrollbar(table_frame, orient=VERTICAL)
+
+        self.AttendaceReportTable = ttk.Treeview(table_frame, columns=("id", "roll", "name", "department", "time", "date", "attendance"),
+            xscrollcommand=scroll_x.set, yscrollcommand=scroll_y.set
+        )
 
         scroll_x.pack(side=BOTTOM, fill=X)
         scroll_y.pack(side=RIGHT, fill=Y)
-        scroll_x.config(command=self.attendance_table.xview)
-        scroll_y.config(command=self.attendance_table.yview)
 
-        self.attendance_table.heading("attendance_id", text="Attendance ID")
-        self.attendance_table.heading("rule", text="Rule")
-        self.attendance_table.heading("name", text="Name")
-        self.attendance_table.heading("department", text="Department")
-        self.attendance_table.heading("time", text="Time")
-        self.attendance_table.heading("date", text="Date")
-        self.attendance_table.heading("status", text="Status")
+        scroll_x.config(command=self.AttendaceReportTable.xview)
+        scroll_y.config(command=self.AttendaceReportTable.yview)
 
-        self.attendance_table["show"] = "headings"
+        self.AttendaceReportTable.heading("id", text="Attendance Id")
+        self.AttendaceReportTable.heading("roll", text="Roll No")
+        self.AttendaceReportTable.heading("name", text="Student Name")
+        self.AttendaceReportTable.heading("department", text="Department")
+        self.AttendaceReportTable.heading("time", text="Time")
+        self.AttendaceReportTable.heading("date", text="Date")
+        self.AttendaceReportTable.heading("attendance", text="Attendance Status")
+
+        self.AttendaceReportTable["show"] = "headings"
         
-        self.attendance_table.column("attendance_id", width=100)
-        self.attendance_table.column("rule", width=100)
-        self.attendance_table.column("name", width=150)
-        self.attendance_table.column("department", width=100)
-        self.attendance_table.column("time", width=100)
-        self.attendance_table.column("date", width=100)
-        self.attendance_table.column("status", width=100)
+        self.AttendaceReportTable.column("id", width=100)
+        self.AttendaceReportTable.column("roll", width=100)
+        self.AttendaceReportTable.column("name", width=150)
+        self.AttendaceReportTable.column("department", width=100)
+        self.AttendaceReportTable.column("time", width=100)
+        self.AttendaceReportTable.column("date", width=100)
+        self.AttendaceReportTable.column("attendance", width=120)
 
-        self.attendance_table.pack(fill=BOTH, expand=1)
-        self.attendance_table.bind("<ButtonRelease>", self.get_cursor)
-        self.fetch_data()
+        self.AttendaceReportTable.pack(fill=BOTH, expand=1)
 
-        # Bottom Frame - Controls
-        bottom_frame = LabelFrame(main_frame, bd=4, bg="white", relief=RIDGE, text="Targets",
-                                font=("times new roman", 12, "bold"))
-        bottom_frame.place(x=10, y=370, width=1510, height=350)
+        self.AttendaceReportTable.bind("<ButtonRelease>", self.get_cursor)
 
-        # Buttons
-        export_btn = Button(bottom_frame, text="Export CSV", command=self.export_csv,
-                          font=("times new roman", 12, "bold"), bg="green", fg="white")
-        export_btn.place(x=50, y=20, width=150, height=40)
+    def fetchData(self,rows):
+        self.AttendaceReportTable.delete(*self.AttendaceReportTable.get_children())
+        for i in rows:
+            self.AttendaceReportTable.insert("",END,values=i)
+    
+    #=============================Import CSV============================
+    def importCSV(self):
+        global mydata
+        mydata.clear()
+        fln = filedialog.askopenfilename(initialdir=os.getcwd(), title="OPEN CSV", filetypes=(("CSV File","*csv"),("ALL File","*.*")), parent=self.root)
+        with open(fln) as myfile:
+            csvread = csv.reader(myfile, delimiter=",")
 
-        update_btn = Button(bottom_frame, text="Update", command=self.update_data,
-                          font=("times new roman", 12, "bold"), bg="blue", fg="white")
-        update_btn.place(x=250, y=20, width=150, height=40)
+            for i in csvread:
+                mydata.append(i)
+            self.fetchData(mydata)
 
-        reset_btn = Button(bottom_frame, text="Reset", command=self.reset,
-                         font=("times new roman", 12, "bold"), bg="red", fg="white")
-        reset_btn.place(x=450, y=20, width=150, height=40)
-
-        # Search Frame
-        search_frame = LabelFrame(bottom_frame, bd=2, bg="white", relief=RIDGE, text="Search Attendance",
-                                font=("times new roman", 12, "bold"))
-        search_frame.place(x=650, y=10, width=800, height=70)
-
-        search_label = Label(search_frame, text="Type here to search:", font=("times new roman", 12, "bold"), bg="white")
-        search_label.grid(row=0, column=0, padx=10, pady=5, sticky=W)
-
-        self.search_var = StringVar()
-        search_entry = ttk.Entry(search_frame, textvariable=self.search_var, width=25, font=("times new roman", 12))
-        search_entry.grid(row=0, column=1, padx=10, pady=5, sticky=W)
-
-        search_btn = Button(search_frame, text="Search", command=self.search_data,
-                          font=("times new roman", 12, "bold"), bg="navy", fg="white")
-        search_btn.grid(row=0, column=2, padx=10, pady=5)
-
-        show_all_btn = Button(search_frame, text="Show All", command=self.fetch_data,
-                            font=("times new roman", 12, "bold"), bg="gray", fg="white")
-        show_all_btn.grid(row=0, column=3, padx=10, pady=5)
-
-        # Filter Options
-        filter_frame = LabelFrame(bottom_frame, bd=2, bg="white", relief=RIDGE, text="Filter Options",
-                                font=("times new roman", 12, "bold"))
-        filter_frame.place(x=50, y=80, width=1400, height=100)
-
-        # Date Filter
-        date_label = Label(filter_frame, text="Date:", font=("times new roman", 12, "bold"), bg="white")
-        date_label.grid(row=0, column=0, padx=10, pady=5, sticky=W)
-
-        self.date_from_var = StringVar()
-        date_from_entry = ttk.Entry(filter_frame, textvariable=self.date_from_var, width=15, font=("times new roman", 12))
-        date_from_entry.grid(row=0, column=1, padx=5, pady=5, sticky=W)
-
-        to_label = Label(filter_frame, text="to", font=("times new roman", 12), bg="white")
-        to_label.grid(row=0, column=2, padx=5, pady=5)
-
-        self.date_to_var = StringVar()
-        date_to_entry = ttk.Entry(filter_frame, textvariable=self.date_to_var, width=15, font=("times new roman", 12))
-        date_to_entry.grid(row=0, column=3, padx=5, pady=5, sticky=W)
-
-        # Department Filter
-        dept_label = Label(filter_frame, text="Department:", font=("times new roman", 12, "bold"), bg="white")
-        dept_label.grid(row=0, column=4, padx=10, pady=5, sticky=W)
-
-        self.dept_var = StringVar()
-        dept_combo = ttk.Combobox(filter_frame, textvariable=self.dept_var, font=("times new roman", 12), state="readonly", width=15)
-        dept_combo["values"] = ("All", "DCS", "LAW", "Mechanical", "Civil", "Chemistry")
-        dept_combo.current(0)
-        dept_combo.grid(row=0, column=5, padx=5, pady=5, sticky=W)
-
-        # Status Filter
-        status_label = Label(filter_frame, text="Status:", font=("times new roman", 12, "bold"), bg="white")
-        status_label.grid(row=0, column=6, padx=10, pady=5, sticky=W)
-
-        self.status_var = StringVar()
-        status_combo = ttk.Combobox(filter_frame, textvariable=self.status_var, font=("times new roman", 12), state="readonly", width=15)
-        status_combo["values"] = ("All", "Present", "Absent", "Late")
-        status_combo.current(0)
-        status_combo.grid(row=0, column=7, padx=5, pady=5, sticky=W)
-
-        filter_btn = Button(filter_frame, text="Apply Filter", command=self.apply_filter,
-                          font=("times new roman", 12, "bold"), bg="green", fg="white")
-        filter_btn.grid(row=0, column=8, padx=10, pady=5)
-
-    def fetch_data(self):
+    #=============================Export CSV============================
+    def exportCSV(self):
         try:
-            conn = mysql.connector.connect(host="localhost", user="root", password="root", database="face_recognizer", port=3310)
-            my_cursor = conn.cursor()
-            my_cursor.execute("SELECT * FROM tbl_attendance")
-            data = my_cursor.fetchall()
-            
-            if len(data) != 0:
-                self.attendance_table.delete(*self.attendance_table.get_children())
-                for row in data:
-                    self.attendance_table.insert("", END, values=row)
-                conn.commit()
-            conn.close()
+            if len(mydata)<1:
+                messagebox.showerror("No Data Found","No Data Found To Export", parent=self.root)
+                return False
+            fln = filedialog.asksaveasfilename(initialdir=os.getcwd(), title="OPEN CSV", filetypes=(("CSV File","*csv"),("ALL File","*.*")), parent=self.root)
+            with open(fln, mode="w",newline="") as myfile:
+                export_write = csv.writer(myfile, delimiter=",")
+
+                for i in mydata:
+                    export_write.writerow(i)
+                messagebox.showinfo("Data Export","Your Data Exported to"+os.path.basename(fln)+"successfully")
         except Exception as es:
-            messagebox.showerror("Error", f"Due To:{str(es)}", parent=self.root)
+            messagebox.showerror("Error",f"Due To : {str(es)}", parent = self.root)
 
-    def get_cursor(self, event=""):
-        cursor_row = self.attendance_table.focus()
-        content = self.attendance_table.item(cursor_row)
-        row = content["values"]
-        
-        if row:
-            self.attendance_details["attendance_id"].delete(0, END)
-            self.attendance_details["attendance_id"].insert(0, row[0])
-            
-            self.attendance_details["rule"].delete(0, END)
-            self.attendance_details["rule"].insert(0, row[1])
-            
-            self.attendance_details["name"].delete(0, END)
-            self.attendance_details["name"].insert(0, row[2])
-            
-            self.attendance_details["department"].delete(0, END)
-            self.attendance_details["department"].insert(0, row[3])
-            
-            self.attendance_details["time"].delete(0, END)
-            self.attendance_details["time"].insert(0, row[4])
-            
-            self.attendance_details["date"].delete(0, END)
-            self.attendance_details["date"].insert(0, row[5])
-            
-            self.attendance_details["attendance_status"].delete(0, END)
-            self.attendance_details["attendance_status"].insert(0, row[6])
-            
-            self.attendance_details["status"].delete(0, END)
-            self.attendance_details["status"].insert(0, row[7])
+    def get_cursor(self,event=""):
+        cursor_row = self.AttendaceReportTable.focus()
+        content = self.AttendaceReportTable.item(cursor_row)
 
-    def update_data(self):
-        if self.attendance_details["attendance_id"].get() == "":
-            messagebox.showerror("Error", "Please select an attendance record to update", parent=self.root)
-        else:
-            try:
-                conn = mysql.connector.connect(host="localhost", user="root", password="root", database="face_recognizer", port=3310)
-                my_cursor = conn.cursor()
-                
-                query = """UPDATE tbl_attendance SET 
-                          rule=%s, name=%s, department=%s, time=%s, 
-                          date=%s, status=%s, remarks=%s 
-                          WHERE attendance_id=%s"""
-                
-                values = (
-                    self.attendance_details["rule"].get(),
-                    self.attendance_details["name"].get(),
-                    self.attendance_details["department"].get(),
-                    self.attendance_details["time"].get(),
-                    self.attendance_details["date"].get(),
-                    self.attendance_details["attendance_status"].get(),
-                    self.attendance_details["status"].get(),
-                    self.attendance_details["attendance_id"].get()
-                )
-                
-                my_cursor.execute(query, values)
-                conn.commit()
-                self.fetch_data()
-                conn.close()
-                messagebox.showinfo("Success", "Attendance record updated successfully", parent=self.root)
-            except Exception as es:
-                messagebox.showerror("Error", f"Due To:{str(es)}", parent=self.root)
+        rows = content['values']
 
-    def reset(self):
-        for entry in self.attendance_details.values():
-            entry.delete(0, END)
-        self.fetch_data()
+        self.var_att_id.set(rows[0])
+        self.var_att_roll.set(rows[1])
+        self.var_att_name.set(rows[2])
+        self.var_att_dept.set(rows[3])
+        self.var_att_time.set(rows[4])
+        self.var_att_date.set(rows[5])
+        self.var_att_attendance.set(rows[6])
 
-    def search_data(self):
-        if self.search_var.get() == "":
-            messagebox.showerror("Error", "Please enter search criteria", parent=self.root)
-        else:
-            try:
-                conn = mysql.connector.connect(host="localhost", user="root", password="root", database="face_recognizer", port=3310)
-                my_cursor = conn.cursor()
-                
-                query = "SELECT * FROM tbl_attendance WHERE " + \
-                        "attendance_id LIKE %s OR name LIKE %s OR department LIKE %s OR date LIKE %s OR status LIKE %s"
-                
-                search_text = "%" + self.search_var.get() + "%"
-                my_cursor.execute(query, (search_text, search_text, search_text, search_text, search_text))
-                data = my_cursor.fetchall()
-                
-                if len(data) != 0:
-                    self.attendance_table.delete(*self.attendance_table.get_children())
-                    for row in data:
-                        self.attendance_table.insert("", END, values=row)
-                    conn.commit()
-                else:
-                    messagebox.showinfo("Info", "No matching records found", parent=self.root)
-                conn.close()
-            except Exception as es:
-                messagebox.showerror("Error", f"Due To:{str(es)}", parent=self.root)
+    def reset_data(self):
+        self.var_att_id.set("")
+        self.var_att_roll.set("")
+        self.var_att_name.set("")
+        self.var_att_dept.set("")
+        self.var_att_time.set("")
+        self.var_att_date.set("")
+        self.var_att_attendance.set("")
 
-    def apply_filter(self):
-        try:
-            conn = mysql.connector.connect(host="localhost", user="root", password="root", database="face_recognizer", port=3310)
-            my_cursor = conn.cursor()
-            
-            base_query = "SELECT * FROM tbl_attendance WHERE 1=1"
-            conditions = []
-            params = []
-            
-            # Date filter
-            if self.date_from_var.get() and self.date_to_var.get():
-                conditions.append("date BETWEEN %s AND %s")
-                params.extend([self.date_from_var.get(), self.date_to_var.get()])
-            
-            # Department filter
-            if self.dept_var.get() != "All":
-                conditions.append("dept = %s")
-                params.append(self.dept_var.get())
-            
-            # Status filter
-            if self.status_var.get() != "All":
-                conditions.append("status = %s")
-                params.append(self.status_var.get())
-            
-            if conditions:
-                query = base_query + " AND " + " AND ".join(conditions)
-            else:
-                query = base_query
-                
-            my_cursor.execute(query, tuple(params))
-            data = my_cursor.fetchall()
-            
-            if len(data) != 0:
-                self.attendance_table.delete(*self.attendance_table.get_children())
-                for row in data:
-                    self.attendance_table.insert("", END, values=row)
-                conn.commit()
-            else:
-                messagebox.showinfo("Info", "No records match the filter criteria", parent=self.root)
-            conn.close()
-        except Exception as es:
-            messagebox.showerror("Error", f"Due To:{str(es)}", parent=self.root)
-
-    def export_csv(self):
-        try:
-            if not os.path.exists("Attendance_Reports"):
-                os.makedirs("Attendance_Reports")
-            
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            filename = f"Attendance_Reports/attendance_report_{timestamp}.csv"
-            
-            with open(filename, "w") as f:
-                f.write("Attendance ID,Rule,Name,Department,Time,Date,Status,Remarks\n")
-                
-                conn = mysql.connector.connect(host="localhost", user="root", password="root", database="face_recognizer", port=3310)
-                my_cursor = conn.cursor()
-                my_cursor.execute("SELECT * FROM tbl_attendance")
-                data = my_cursor.fetchall()
-                
-                for row in data:
-                    f.write(",".join(str(item) for item in row) + "\n")
-                
-                conn.close()
-            
-            messagebox.showinfo("Success", f"Attendance data exported to {filename}", parent=self.root)
-        except Exception as es:
-            messagebox.showerror("Error", f"Due To:{str(es)}", parent=self.root)
 
 if __name__ == "__main__":
     root = Tk()
-    obj = Attendance_Filter(root)
+    obj = FaceRecognizationAttendance(root)
     root.mainloop()
